@@ -12,6 +12,9 @@ import (
 
 func (s *Server) route(r *http.Request, body []byte) apiResponse {
 	p := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	if r.URL.Path == oauthTokenPath {
+		return s.exchangeOAuthCode(r, body)
+	}
 	if r.Method == http.MethodGet && r.URL.Path == "/app" {
 		return jsonResponse(200, renderApp(s.requestApp(r)))
 	}
@@ -220,6 +223,9 @@ func (s *Server) requestApp(r *http.Request) App {
 }
 
 func (s *Server) authorized(r *http.Request) bool {
+	if r.URL.Path == oauthTokenPath {
+		return true
+	}
 	token := bearer(r)
 	if issued, exists := s.state.tokens[token]; exists {
 		return !appRequest(r) && s.clock().Before(issued.expires) && (strings.HasPrefix(r.URL.Path, "/repos/") || strings.HasPrefix(r.URL.Path, "/repositories/") || strings.HasPrefix(r.URL.Path, "/installation/"))
@@ -382,6 +388,9 @@ func renderApp(app App) Object {
 	}
 	defaults(result, Object{"name": app.Slug, "owner": Object{"login": "mock-owner", "id": 1}, "permissions": Object{"contents": "read", "metadata": "read", "pull_requests": "read"}, "events": []string{"push", "pull_request"}})
 	result["id"], result["slug"], result["html_url"] = app.ID, app.Slug, "https://github.com/apps/"+app.Slug
+	if app.ClientID != "" {
+		result["client_id"] = app.ClientID
+	}
 	return result
 }
 

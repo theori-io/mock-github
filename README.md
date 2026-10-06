@@ -84,6 +84,7 @@ the previous state. `AddStub(rule)` adds a rule that reset removes.
 | `POST /app/installations/{id}/access_tokens` | Issue a scoped token |
 | `GET /installation/repositories` | Token-scoped repository selection |
 | `DELETE /installation/token` | Revoke an installation token |
+| `POST /login/oauth/access_token` | Exchange a web flow OAuth code for a user token |
 
 Lists support `page` and `per_page` (default 30, maximum 100) with `Link` headers.
 Repository and branch lists sort by name; PR lists sort by number descending,
@@ -133,7 +134,7 @@ user/PAT credential; `apps[].token` configures each app's opaque JWT substitute.
 The legacy top-level `app_token` works with a single app and must agree with its
 token if both are supplied. `GITHUB_MOCK_TOKEN` overrides the command's user token.
 Both `Bearer` and `token` Authorization schemes work. App credentials are opaque
-fixture values; JWT signature verification and the OAuth browser flow are outside
+fixture values; JWT signature verification and the OAuth browser pages are outside
 this mock's scope.
 
 For multiple user actors, keep the default identity in `user` with its `token`,
@@ -157,12 +158,30 @@ mock tokens return 401. Out-of-scope
 repositories return 404. Issued tokens support repository and installation
 endpoints, not `/user`. Tokens use the reserved `ghs_mock_` prefix.
 
+## OAuth code exchange
+
+`POST /login/oauth/access_token` models the web flow's code exchange on the API
+host, where clients such as githubkit send it for a non-github.com base URL. Set
+`apps[].client_id` and `apps[].client_secret`, then give users codes with the
+top-level `oauth_code` (for the default `user`/`token`) or `users[].oauth_code`.
+The exchange returns the user's fixture `token` as `access_token`, so it works on
+every user route. Codes are single use until the next reset or fixture load, and
+are accepted by any app with matching client credentials.
+
+Parameters come from the query string and a JSON or form-encoded body. Responses
+are JSON when `Accept` includes `application/json` and form-encoded otherwise.
+Like GitHub, failures return 200 with `error` set to
+`incorrect_client_credentials` or `bad_verification_code`. App responses include
+`client_id` and omit `client_secret`.
+
 ## Installation request and approval
 
 Use [the approval fixture](fixtures/installation-approval.json)
 to start with no installations. It has `octocat` as an `acme` member
 (`member-token`), `alice` as its admin (`admin-token`), and `eve` as an outsider
-to `acme` (`outsider-token`). App 7 uses `app-jwt`. Replace its webhook URL with
+to `acme` (`outsider-token`), with OAuth codes `member-code`, `admin-code`, and
+`outsider-code`. App 7 uses `app-jwt` and client credentials `example-client` /
+`example-secret`. Replace its webhook URL with
 the application's receiver, then start the binary with this fixture.
 
 ```sh

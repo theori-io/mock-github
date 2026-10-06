@@ -72,25 +72,30 @@
         "url": "http://127.0.0.1:8000/webhooks/github",
         "secret": "test-secret"
       },
-      "token": "app-jwt"
+      "token": "app-jwt",
+      "client_id": "example-client",
+      "client_secret": "example-secret"
     }
   ],
   "webhook_events": [],
   "token": "member-token",
+  "oauth_code": "member-code",
   "users": [
     {
       "data": {
         "login": "alice",
         "id": 3
       },
-      "token": "admin-token"
+      "token": "admin-token",
+      "oauth_code": "admin-code"
     },
     {
       "data": {
         "login": "eve",
         "id": 4
       },
-      "token": "outsider-token"
+      "token": "outsider-token",
+      "oauth_code": "outsider-code"
     }
   ],
   "organizations": [

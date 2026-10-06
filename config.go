@@ -25,6 +25,7 @@ type Config struct {
 	WebhookEvents       []WebhookEvent   `json:"webhook_events,omitempty"`
 	Stubs               []Stub           `json:"stubs,omitempty"`
 	Token               string           `json:"token,omitempty"`
+	OAuthCode           string           `json:"oauth_code,omitempty"`
 	AppToken            string           `json:"app_token,omitempty"`
 	InstallationIDStart int              `json:"installation_id_start,omitempty"`
 	MaxRequests         int              `json:"max_requests,omitempty"`
@@ -34,8 +35,9 @@ type Config struct {
 
 // User identifies a test actor by an opaque user/PAT credential.
 type User struct {
-	Data  Object `json:"data"`
-	Token string `json:"token"`
+	Data      Object `json:"data"`
+	Token     string `json:"token"`
+	OAuthCode string `json:"oauth_code,omitempty"`
 }
 
 // Organization assigns fixture users the GitHub roles member or admin.
@@ -69,13 +71,16 @@ type Commit struct {
 }
 
 // App owns installations and an optional webhook receiver. Token is an opaque JWT
-// substitute. Multiple apps require distinct, nonempty tokens.
+// substitute. Multiple apps require distinct, nonempty tokens. ClientID and
+// ClientSecret authenticate OAuth code exchanges.
 type App struct {
-	ID      int            `json:"id"`
-	Slug    string         `json:"slug"`
-	Data    Object         `json:"data,omitempty"`
-	Token   string         `json:"token,omitempty"`
-	Webhook *WebhookConfig `json:"webhook,omitempty"`
+	ID           int            `json:"id"`
+	Slug         string         `json:"slug"`
+	Data         Object         `json:"data,omitempty"`
+	Token        string         `json:"token,omitempty"`
+	ClientID     string         `json:"client_id,omitempty"`
+	ClientSecret string         `json:"client_secret,omitempty"`
+	Webhook      *WebhookConfig `json:"webhook,omitempty"`
 }
 
 // Installation installs an app on an account and grants repository access.

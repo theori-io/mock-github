@@ -30,6 +30,7 @@ type state struct {
 	tokens               map[string]issuedToken
 	nextToken            int
 	installationRequests map[int]installationRequest
+	oauthCodes           map[string]string
 	nextRequest          int
 }
 
@@ -45,7 +46,7 @@ func newState(cfg Config, now string) (*state, error) {
 	if len(apps) > 1 && cfg.AppToken != "" {
 		return nil, fmt.Errorf("app_token requires a single app; use apps[].token for multiple apps")
 	}
-	slugs, tokens := map[string]bool{}, map[string]bool{}
+	slugs, tokens, clientIDs := map[string]bool{}, map[string]bool{}, map[string]bool{}
 	for _, app := range apps {
 		if app.ID <= 0 || s.apps[app.ID].ID != 0 || !validName(app.Slug) || slugs[app.Slug] {
 			return nil, fmt.Errorf("app needs a unique positive id and slug")
@@ -58,6 +59,12 @@ func newState(cfg Config, now string) (*state, error) {
 		}
 		if (len(apps) > 1 && app.Token == "") || (app.Token != "" && tokens[app.Token]) || strings.HasPrefix(app.Token, "ghs_mock_") || strings.ContainsAny(app.Token, " \t\r\n") {
 			return nil, fmt.Errorf("apps need distinct opaque tokens without whitespace or the ghs_mock_ prefix")
+		}
+		if (app.ClientID == "") != (app.ClientSecret == "") || clientIDs[app.ClientID] {
+			return nil, fmt.Errorf("apps need distinct client_id values, each with a client_secret")
+		}
+		if app.ClientID != "" {
+			clientIDs[app.ClientID] = true
 		}
 		if err := validateWebhookConfig(app.Webhook); err != nil {
 			return nil, fmt.Errorf("app %d: %w", app.ID, err)
@@ -74,6 +81,9 @@ func newState(cfg Config, now string) (*state, error) {
 		s.user["id"] = 1
 	}
 	if err := s.loadIdentities(cfg); err != nil {
+		return nil, err
+	}
+	if err := s.loadOAuthCodes(cfg); err != nil {
 		return nil, err
 	}
 	s.installationRequests, s.nextRequest = map[int]installationRequest{}, 1
