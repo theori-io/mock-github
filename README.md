@@ -231,6 +231,19 @@ replacement clears pending/approved requests and restores seeded installations;
 reset also revokes issued tokens and cancels pending webhook attempts. These
 workflow endpoints work identically with an in-process handler and the binary.
 
+An org admin can also install directly, as from GitHub's install page:
+
+```sh
+curl -X POST http://127.0.0.1:8089/__mock/orgs/acme/installations \
+  -H 'Authorization: Bearer admin-token' -H 'Content-Type: application/json' \
+  -d '{"app_id":7,"repositories":["acme/demo"]}'
+```
+
+It takes the same body and validation as a request, requires the `admin` role,
+and returns 201 with `installation` and `delivery`. The `installation` event has
+`action: created` with a null `requester`, like GitHub's event for an install
+that needed no approval.
+
 ## Webhook-driven e2e tests
 
 Set the app's `webhook.url` to the application's receiver URL, reachable from the

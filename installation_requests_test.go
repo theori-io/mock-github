@@ -323,3 +323,35 @@ func TestApprovalPreservesSeededInstallationsAndRejectsMissingReceiver(t *testin
 	_, noReceiver := start(t, cfg)
 	call(t, noReceiver, "POST", requestPath, requestBody, "member-token", 422)
 }
+
+func TestAdminDirectInstallEmitsCreatedEventWithoutRequester(t *testing.T) {
+	events := make(chan mockgithub.Object, 1)
+	receiver := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		events <- object(t, body)
+		w.WriteHeader(202)
+	}))
+	defer receiver.Close()
+	cfg := approvalFixture(t, receiver.URL)
+	cfg.InstallationIDStart = 500
+	_, server := start(t, cfg)
+	const installPath = "/__mock/orgs/acme/installations"
+	call(t, server, "POST", installPath, requestBody, "member-token", 403)
+	call(t, server, "POST", installPath, requestBody, "", 401)
+	_, created := call(t, server, "POST", installPath, requestBody, "admin-token", 201)
+	result := object(t, created)
+	if result["installation"].(map[string]any)["id"] != float64(500) || result["delivery"].(map[string]any)["response_status"] != float64(202) {
+		t.Fatalf("install: %s", created)
+	}
+	event := <-events
+	if event["action"] != "created" || event["requester"] != nil || event["sender"].(map[string]any)["login"] != "alice" {
+		t.Fatalf("event: %v", event)
+	}
+	repos := event["repositories"].([]any)
+	if len(repos) != 1 || repos[0].(map[string]any)["full_name"] != "acme/demo" {
+		t.Fatalf("event repositories: %v", repos)
+	}
+	call(t, server, "POST", "/app/installations/500/access_tokens", "{}", "app-jwt", 201)
+	call(t, server, "POST", installPath, requestBody, "admin-token", 409)
+	call(t, server, "POST", requestPath, requestBody, "member-token", 409)
+}
