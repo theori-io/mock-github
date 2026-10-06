@@ -70,7 +70,7 @@ the previous state. `AddStub(rule)` adds a rule that reset removes.
 | --- | --- |
 | `GET /user` | Fixture user identity |
 | `GET /user/repos`, `GET /orgs/{org}/repos` | Accessible repository selection |
-| `GET /repos/{owner}/{repo}` | Repository metadata |
+| `GET /repos/{owner}/{repo}`, `GET /repositories/{id}` | Repository metadata with token-scoped access |
 | `GET /repos/{owner}/{repo}/branches[/{branch}]` | Branch selection and commit SHA |
 | `GET /repos/{owner}/{repo}/commits/{ref}` | Resolve a branch, SHA, or PR head |
 | `GET /repos/{owner}/{repo}/pulls[/{number}]` | PR selection and head/base metadata |
@@ -90,7 +90,10 @@ Repository and branch lists sort by name; PR lists sort by number descending,
 with `direction=asc`, `state=open|closed|all`, and `base` filters. Branch lists
 support `protected=true|false`. Installation repository/user installation lists
 return GitHub's `total_count` envelope. Other list filters/sorts are not modeled.
-Missing repositories/refs and unimplemented routes return 404.
+User, repository, and installation responses include defaults for required GitHub
+REST schema fields so typed clients can parse minimal fixtures. User/repository
+metadata overrides preserve fixture values. Missing repositories/refs and
+unimplemented routes return 404.
 
 Refs accept branch names, full commit SHAs, `refs/heads/{branch}`, and
 `refs/pull/{number}/head`. Branch names may contain `/`. Omitted archive refs
@@ -186,6 +189,10 @@ One request/installation is allowed per app and organization; duplicates return
 409. Requesting returns 201 with a pending request and emits no installation
 event. Pending requests do not appear in installation discovery and cannot issue
 installation tokens. The admin list is a paginated array of pending requests.
+
+Set `installation_id_start` to choose the first ID for approved installations
+(default 1); occupied IDs are skipped. Use distinct ranges when resetting fixtures
+against a long-lived client that caches installation tokens.
 
 Approval accepts an empty body or empty JSON object. It atomically creates an
 installation with a unique ID and the requested repository grants, marks the

@@ -166,7 +166,7 @@ func (s *Server) approveInstallationRequest(r *http.Request, request installatio
 		return errorResponse(409, "Installation request is already approved")
 	}
 	app := s.state.apps[request.AppID]
-	id := 1
+	id := max(1, s.cfg.InstallationIDStart)
 	for s.state.installations[id].ID != 0 {
 		id++
 	}

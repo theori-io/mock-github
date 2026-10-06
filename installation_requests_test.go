@@ -64,7 +64,9 @@ func TestInstallationRequestApprovalLifecycle(t *testing.T) {
 		w.WriteHeader(202)
 	}))
 	defer receiver.Close()
-	mock, server := start(t, approvalFixture(t, receiver.URL))
+	cfg := approvalFixture(t, receiver.URL)
+	cfg.InstallationIDStart = 12345
+	mock, server := start(t, cfg)
 	apiURL = server.URL
 	_, identity := call(t, server, "GET", "/user", "", "admin-token", 200)
 	if object(t, identity)["login"] != "alice" {
@@ -94,6 +96,9 @@ func TestInstallationRequestApprovalLifecycle(t *testing.T) {
 	result := object(t, approved)
 	installation := result["installation"].(map[string]any)
 	id := int(installation["id"].(float64))
+	if id != 12345 {
+		t.Fatalf("installation ID = %d, want configured start", id)
+	}
 	if result["request"].(map[string]any)["status"] != "approved" || result["delivery"].(map[string]any)["response_status"] != float64(202) {
 		t.Fatalf("approval: %s", approved)
 	}

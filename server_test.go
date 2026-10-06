@@ -276,6 +276,17 @@ func TestInstallationTokenLifecycleAndRepositoryScope(t *testing.T) {
 	if object(t, data)["total_count"] != float64(1) || bytes.Contains(data, []byte("other/private")) {
 		t.Fatal("installation token leaked repository")
 	}
+	_, named := call(t, server, "GET", "/repos/acme/demo", "", token, 200)
+	_, numeric := call(t, server, "GET", "/repositories/10", "", token, 200)
+	if !bytes.Equal(named, numeric) {
+		t.Fatal("numeric lookup differs from named repository")
+	}
+	if err := mock.AddStub(mockgithub.Stub{Method: "GET", Path: "/repositories/20", Responses: []mockgithub.Response{{Status: 200}}}); err != nil {
+		t.Fatal(err)
+	}
+	call(t, server, "GET", "/repositories/20", "", token, 404)
+	call(t, server, "GET", "/repositories/999", "", token, 404)
+	call(t, server, "GET", "/repositories/invalid", "", token, 404)
 	call(t, server, "GET", "/repos/acme/demo/zipball/main", "", token, 200)
 	if err := mock.AddStub(mockgithub.Stub{Method: "GET", Path: "/repos/other/private", Responses: []mockgithub.Response{{Status: 200}}}); err != nil {
 		t.Fatal(err)
@@ -284,6 +295,7 @@ func TestInstallationTokenLifecycleAndRepositoryScope(t *testing.T) {
 	call(t, server, "GET", "/user", "", token, 401)
 	call(t, server, "DELETE", "/installation/token", "", token, 204)
 	call(t, server, "GET", "/installation/repositories", "", token, 401)
+	call(t, server, "GET", "/repositories/10", "", token, 401)
 	call(t, server, "GET", "/app/installations", "", token, 401)
 	token = issue(`{"repositories":["demo"]}`)
 	now.Add(3600)
@@ -592,5 +604,29 @@ func TestInvalidInputs(t *testing.T) {
 		if _, err := mockgithub.New(mockgithub.Config{Stubs: []mockgithub.Stub{stub}}); err == nil {
 			t.Fatalf("invalid stub accepted: %+v", stub)
 		}
+	}
+}
+
+func TestResponseDefaultsPreserveFixtureMetadata(t *testing.T) {
+	cfg := fixture(t)
+	cfg.User["name"] = "Fixture User"
+	cfg.User["site_admin"] = true
+	cfg.Repositories[0].Data["has_discussions"] = true
+	cfg.Repositories[0].Data["forks_count"] = 17
+	_, server := start(t, cfg)
+	_, data := call(t, server, "GET", "/user", "", "", 200)
+	user := object(t, data)
+	if user["name"] != "Fixture User" || user["site_admin"] != true || user["public_repos"] != float64(0) || user["node_id"] == nil {
+		t.Fatal("user defaults overwrote metadata or omitted required fields")
+	}
+	_, data = call(t, server, "GET", "/repositories/10", "", "", 200)
+	repo := object(t, data)
+	if repo["has_discussions"] != true || repo["forks_count"] != float64(17) || repo["license"] != nil || repo["hooks_url"] == nil {
+		t.Fatal("repository defaults overwrote metadata or omitted required fields")
+	}
+	_, data = call(t, server, "GET", "/app/installations/42", "", "", 200)
+	installation := object(t, data)
+	if installation["target_id"] != float64(2) || installation["html_url"] == nil || installation["single_file_name"] != nil || installation["suspended_by"] != nil {
+		t.Fatal("installation response omitted schema fields")
 	}
 }

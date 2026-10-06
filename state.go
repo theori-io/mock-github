@@ -34,6 +34,9 @@ type state struct {
 }
 
 func newState(cfg Config, now string) (*state, error) {
+	if cfg.InstallationIDStart < 0 {
+		return nil, fmt.Errorf("installation_id_start must be nonnegative")
+	}
 	s := &state{user: cfg.User, repos: map[string]*repo{}, apps: map[int]App{}, installations: map[int]Installation{}, tokens: map[string]issuedToken{}, nextToken: 1}
 	apps := cfg.Apps
 	if len(apps) == 0 {

@@ -16,19 +16,20 @@ type Object map[string]any
 
 // Config seeds a server. Each server owns an independent copy of its fixtures.
 type Config struct {
-	User          Object           `json:"user,omitempty"`
-	Users         []User           `json:"users,omitempty"`
-	Organizations []Organization   `json:"organizations,omitempty"`
-	Repositories  []Repository     `json:"repositories,omitempty"`
-	Apps          []App            `json:"apps,omitempty"`
-	Installations []Installation   `json:"installations,omitempty"`
-	WebhookEvents []WebhookEvent   `json:"webhook_events,omitempty"`
-	Stubs         []Stub           `json:"stubs,omitempty"`
-	Token         string           `json:"token,omitempty"`
-	AppToken      string           `json:"app_token,omitempty"`
-	MaxRequests   int              `json:"max_requests,omitempty"`
-	MaxDeliveries int              `json:"max_deliveries,omitempty"`
-	Clock         func() time.Time `json:"-"`
+	User                Object           `json:"user,omitempty"`
+	Users               []User           `json:"users,omitempty"`
+	Organizations       []Organization   `json:"organizations,omitempty"`
+	Repositories        []Repository     `json:"repositories,omitempty"`
+	Apps                []App            `json:"apps,omitempty"`
+	Installations       []Installation   `json:"installations,omitempty"`
+	WebhookEvents       []WebhookEvent   `json:"webhook_events,omitempty"`
+	Stubs               []Stub           `json:"stubs,omitempty"`
+	Token               string           `json:"token,omitempty"`
+	AppToken            string           `json:"app_token,omitempty"`
+	InstallationIDStart int              `json:"installation_id_start,omitempty"`
+	MaxRequests         int              `json:"max_requests,omitempty"`
+	MaxDeliveries       int              `json:"max_deliveries,omitempty"`
+	Clock               func() time.Time `json:"-"`
 }
 
 // User identifies a test actor by an opaque user/PAT credential.

@@ -215,6 +215,13 @@ func (s *Server) prepare(r *http.Request, body []byte) (apiResponse, time.Durati
 	if len(parts) >= 3 && parts[0] == "repos" && !s.canAccess(r, repoKey(parts[1], parts[2])) {
 		return errorResponse(http.StatusNotFound, "Not Found"), 0
 	}
+	if len(parts) == 2 && parts[0] == "repositories" {
+		for key, repo := range s.state.repos {
+			if fmt.Sprint(repo.data["id"]) == parts[1] && !s.canAccess(r, key) {
+				return errorResponse(http.StatusNotFound, "Not Found"), 0
+			}
+		}
+	}
 	response, matched := s.matchStub(r, body)
 	if matched {
 		response = clone(response)

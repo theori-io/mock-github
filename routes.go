@@ -95,6 +95,17 @@ func (s *Server) route(r *http.Request, body []byte) apiResponse {
 			return s.issueToken(r, installation, body)
 		}
 	}
+	if r.Method == http.MethodGet && len(p) == 2 && p[0] == "repositories" {
+		id, err := strconv.Atoi(p[1])
+		if err == nil {
+			for key, repo := range s.state.repos {
+				if number(repo.data["id"]) == id && s.canAccess(r, key) {
+					return jsonResponse(200, renderRepo(repo, r))
+				}
+			}
+		}
+		return errorResponse(404, "Not Found")
+	}
 	if len(p) < 3 || p[0] != "repos" {
 		return errorResponse(404, "Not Found")
 	}
@@ -211,7 +222,7 @@ func (s *Server) requestApp(r *http.Request) App {
 func (s *Server) authorized(r *http.Request) bool {
 	token := bearer(r)
 	if issued, exists := s.state.tokens[token]; exists {
-		return !appRequest(r) && s.clock().Before(issued.expires) && (strings.HasPrefix(r.URL.Path, "/repos/") || strings.HasPrefix(r.URL.Path, "/installation/"))
+		return !appRequest(r) && s.clock().Before(issued.expires) && (strings.HasPrefix(r.URL.Path, "/repos/") || strings.HasPrefix(r.URL.Path, "/repositories/") || strings.HasPrefix(r.URL.Path, "/installation/"))
 	}
 	if strings.HasPrefix(token, "ghs_mock_") || strings.HasPrefix(r.URL.Path, "/installation/") {
 		return false
@@ -295,7 +306,17 @@ func origin(r *http.Request) string {
 func renderUser(data Object, r *http.Request) Object {
 	result := clone(data)
 	login := url.PathEscape(text(data["login"]))
-	defaults(result, Object{"type": "User"})
+	defaults(result, Object{
+		"id": 1, "node_id": "MOCK_USER", "avatar_url": "https://github.com/" + login + ".png",
+		"gravatar_id": "", "type": "User", "site_admin": false,
+		"name": nil, "company": nil, "blog": "", "location": nil, "email": nil,
+		"hireable": nil, "bio": nil, "public_repos": 0, "public_gists": 0,
+		"followers": 0, "following": 0,
+		"created_at": "1970-01-01T00:00:00Z", "updated_at": "1970-01-01T00:00:00Z",
+	})
+	for _, field := range []string{"followers", "following", "gists", "starred", "subscriptions", "organizations", "repos", "events", "received_events"} {
+		defaults(result, Object{field + "_url": origin(r) + "/users/" + login + "/" + field})
+	}
 	result["url"], result["html_url"] = origin(r)+"/users/"+login, "https://github.com/"+login
 	return result
 }
@@ -306,6 +327,19 @@ func renderRepo(repo *repo, r *http.Request) Object {
 	result["url"], result["html_url"] = origin(r)+"/repos/"+fullName, "https://github.com/"+fullName
 	result["archive_url"] = origin(r) + "/repos/" + fullName + "/{archive_format}{/ref}"
 	result["owner"] = renderUser(asObject(result["owner"]), r)
+	defaults(result, Object{
+		"node_id": fmt.Sprintf("MOCK_REPO_%d", number(result["id"])), "fork": false,
+		"git_url": "git://github.com/" + fullName + ".git", "ssh_url": "git@github.com:" + fullName + ".git",
+		"clone_url": "https://github.com/" + fullName + ".git", "svn_url": "https://github.com/" + fullName,
+		"mirror_url": nil, "homepage": nil, "language": nil,
+		"forks_count": 0, "stargazers_count": 0, "watchers_count": 0, "size": 0, "open_issues_count": 0,
+		"has_issues": true, "has_projects": true, "has_wiki": true, "has_pages": false, "has_discussions": false,
+		"archived": false, "disabled": false, "pushed_at": result["created_at"],
+		"subscribers_count": 0, "network_count": 0, "license": nil, "forks": 0, "open_issues": 0, "watchers": 0,
+	})
+	for _, field := range []string{"assignees", "blobs", "branches", "collaborators", "comments", "commits", "compare", "contents", "contributors", "deployments", "downloads", "events", "forks", "git_commits", "git_refs", "git_tags", "issue_comment", "issue_events", "issues", "keys", "labels", "languages", "merges", "milestones", "notifications", "pulls", "releases", "stargazers", "statuses", "subscribers", "subscription", "tags", "teams", "trees", "hooks"} {
+		defaults(result, Object{field + "_url": origin(r) + "/repos/" + fullName + "/" + field})
+	}
 	return result
 }
 
@@ -338,7 +372,7 @@ func renderPull(repo *repo, pull Object, r *http.Request) Object {
 }
 
 func (s *Server) renderInstallation(installation Installation, r *http.Request) Object {
-	return Object{"id": installation.ID, "app_id": installation.AppID, "app_slug": s.state.apps[installation.AppID].Slug, "target_type": text(installation.Account["type"]), "account": renderUser(installation.Account, r), "permissions": clone(installation.Permissions), "repository_selection": "selected", "created_at": installation.CreatedAt, "updated_at": installation.CreatedAt, "suspended_at": nil, "events": renderApp(s.state.apps[installation.AppID])["events"], "access_tokens_url": fmt.Sprintf("%s/app/installations/%d/access_tokens", origin(r), installation.ID), "repositories_url": origin(r) + "/installation/repositories"}
+	return Object{"target_id": number(renderUser(installation.Account, r)["id"]), "html_url": fmt.Sprintf("https://github.com/settings/installations/%d", installation.ID), "single_file_name": nil, "suspended_by": nil, "id": installation.ID, "app_id": installation.AppID, "app_slug": s.state.apps[installation.AppID].Slug, "target_type": text(installation.Account["type"]), "account": renderUser(installation.Account, r), "permissions": clone(installation.Permissions), "repository_selection": "selected", "created_at": installation.CreatedAt, "updated_at": installation.CreatedAt, "suspended_at": nil, "events": renderApp(s.state.apps[installation.AppID])["events"], "access_tokens_url": fmt.Sprintf("%s/app/installations/%d/access_tokens", origin(r), installation.ID), "repositories_url": origin(r) + "/installation/repositories"}
 }
 
 func renderApp(app App) Object {
