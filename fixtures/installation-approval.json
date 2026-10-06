@@ -1,0 +1,113 @@
+{
+  "user": {
+    "login": "octocat",
+    "id": 1
+  },
+  "repositories": [
+    {
+      "owner": "acme",
+      "name": "demo",
+      "data": {
+        "id": 10,
+        "private": true,
+        "description": "Source scan fixture"
+      },
+      "branches": [
+        {
+          "name": "main",
+          "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "protected": true
+        },
+        {
+          "name": "feature/fix",
+          "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "commits": [
+        {
+          "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "files": {
+            "README.md": "# Demo\n",
+            "src/main.py": "print('main')\n"
+          }
+        },
+        {
+          "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "files": {
+            "README.md": "# Demo\n",
+            "src/main.py": "print('feature')\n"
+          }
+        }
+      ],
+      "pull_requests": [
+        {
+          "number": 1,
+          "title": "Fix the source",
+          "head": {
+            "ref": "feature/fix",
+            "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "base": {
+            "ref": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      ]
+    }
+  ],
+  "installations": [],
+  "apps": [
+    {
+      "id": 7,
+      "slug": "example-app",
+      "data": {
+        "name": "Example App",
+        "owner": {
+          "login": "acme",
+          "type": "Organization",
+          "id": 2
+        }
+      },
+      "webhook": {
+        "url": "http://127.0.0.1:8000/webhooks/github",
+        "secret": "test-secret"
+      },
+      "token": "app-jwt"
+    }
+  ],
+  "webhook_events": [],
+  "token": "member-token",
+  "users": [
+    {
+      "data": {
+        "login": "alice",
+        "id": 3
+      },
+      "token": "admin-token"
+    },
+    {
+      "data": {
+        "login": "eve",
+        "id": 4
+      },
+      "token": "outsider-token"
+    }
+  ],
+  "organizations": [
+    {
+      "login": "acme",
+      "id": 2,
+      "members": {
+        "octocat": "member",
+        "alice": "admin"
+      }
+    },
+    {
+      "login": "other-org",
+      "id": 5,
+      "members": {
+        "eve": "admin"
+      }
+    }
+  ]
+}

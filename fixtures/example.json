@@ -1,0 +1,245 @@
+{
+  "user": {
+    "login": "octocat",
+    "id": 1
+  },
+  "repositories": [
+    {
+      "owner": "acme",
+      "name": "demo",
+      "data": {
+        "id": 10,
+        "private": true,
+        "description": "Source scan fixture"
+      },
+      "branches": [
+        {
+          "name": "main",
+          "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "protected": true
+        },
+        {
+          "name": "feature/fix",
+          "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      ],
+      "commits": [
+        {
+          "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "files": {
+            "README.md": "# Demo\n",
+            "src/main.py": "print('main')\n"
+          }
+        },
+        {
+          "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "files": {
+            "README.md": "# Demo\n",
+            "src/main.py": "print('feature')\n"
+          }
+        }
+      ],
+      "pull_requests": [
+        {
+          "number": 1,
+          "title": "Fix the source",
+          "head": {
+            "ref": "feature/fix",
+            "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "base": {
+            "ref": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      ]
+    }
+  ],
+  "installations": [
+    {
+      "id": 42,
+      "account": {
+        "login": "acme",
+        "type": "Organization",
+        "id": 2
+      },
+      "repositories": [
+        "acme/demo"
+      ],
+      "app_id": 7
+    }
+  ],
+  "apps": [
+    {
+      "id": 7,
+      "slug": "example-app",
+      "data": {
+        "name": "Example App",
+        "owner": {
+          "login": "acme",
+          "type": "Organization",
+          "id": 2
+        }
+      },
+      "webhook": {
+        "url": "http://127.0.0.1:8000/webhooks/github",
+        "secret": "test-secret"
+      }
+    }
+  ],
+  "webhook_events": [
+    {
+      "name": "push-main",
+      "app_id": 7,
+      "event": "push",
+      "payload": {
+        "ref": "refs/heads/main",
+        "before": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "after": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "created": false,
+        "deleted": false,
+        "forced": false,
+        "repository": {
+          "id": 10,
+          "name": "demo",
+          "full_name": "acme/demo",
+          "private": true,
+          "owner": {
+            "login": "acme",
+            "type": "Organization",
+            "id": 2
+          }
+        },
+        "pusher": {
+          "name": "octocat"
+        },
+        "head_commit": {
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "message": "Update source",
+          "timestamp": "2026-01-01T00:00:00Z"
+        },
+        "commits": [
+          {
+            "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "message": "Update source"
+          }
+        ],
+        "installation": {
+          "id": 42
+        },
+        "sender": {
+          "login": "octocat",
+          "id": 1
+        }
+      }
+    },
+    {
+      "name": "pull-request-opened",
+      "app_id": 7,
+      "event": "pull_request",
+      "payload": {
+        "action": "opened",
+        "number": 1,
+        "repository": {
+          "id": 10,
+          "name": "demo",
+          "full_name": "acme/demo",
+          "private": true,
+          "owner": {
+            "login": "acme",
+            "type": "Organization",
+            "id": 2
+          }
+        },
+        "pull_request": {
+          "number": 1,
+          "title": "Fix the source",
+          "head": {
+            "ref": "feature/fix",
+            "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "repo": {
+              "id": 10,
+              "name": "demo",
+              "full_name": "acme/demo",
+              "private": true,
+              "owner": {
+                "login": "acme",
+                "type": "Organization",
+                "id": 2
+              }
+            }
+          },
+          "base": {
+            "ref": "main",
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "repo": {
+              "id": 10,
+              "name": "demo",
+              "full_name": "acme/demo",
+              "private": true,
+              "owner": {
+                "login": "acme",
+                "type": "Organization",
+                "id": 2
+              }
+            }
+          },
+          "id": 1,
+          "state": "open",
+          "draft": false,
+          "user": {
+            "login": "octocat",
+            "id": 1
+          }
+        },
+        "installation": {
+          "id": 42
+        },
+        "sender": {
+          "login": "octocat",
+          "id": 1
+        }
+      }
+    },
+    {
+      "name": "installation-created",
+      "app_id": 7,
+      "event": "installation",
+      "payload": {
+        "action": "created",
+        "installation": {
+          "id": 42,
+          "app_id": 7,
+          "app_slug": "example-app",
+          "account": {
+            "login": "acme",
+            "type": "Organization",
+            "id": 2
+          },
+          "repository_selection": "selected",
+          "permissions": {
+            "contents": "read",
+            "metadata": "read",
+            "pull_requests": "read"
+          },
+          "events": [
+            "push",
+            "pull_request"
+          ]
+        },
+        "repositories": [
+          {
+            "id": 10,
+            "name": "demo",
+            "full_name": "acme/demo",
+            "private": true
+          }
+        ],
+        "sender": {
+          "login": "octocat",
+          "id": 1
+        }
+      }
+    }
+  ]
+}
